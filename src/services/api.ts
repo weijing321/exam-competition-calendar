@@ -1,53 +1,57 @@
 /**
  * 前端 API 服务层
- * 统一管理所有与后端的 HTTP 通信
+ * 直接连接 Supabase 数据库，不经过后端 API
  */
 
+import { createClient } from '@supabase/supabase-js';
 import type { Competition, Exam, Notification } from '../types';
 
-// 开发环境通过 Vite proxy 代理到后端，生产环境直接使用同源 /api
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
-
-// 通用请求函数
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      // Demo 模式下使用默认用户ID（后续可替换为真实认证token）
-      'x-user-id': 'demo-user-001',
-    },
-    ...options,
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: '请求失败' }));
-    throw new Error(error.error || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
+// Supabase 客户端 - 使用 ANON_KEY（公开可安全暴露在前端）
+const supabaseUrl = 'https://adatntxsyzownxurkdxc.supabase.co';
+const supabaseAnonKey = 'sb_publishable_Ba0sEQEcKnaGI0gKnrAJ4A_iWiwG-yN';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ==================== 竞赛 API ====================
 
 export async function fetchCompetitions(category?: string): Promise<Competition[]> {
-  const params = category ? `?category=${encodeURIComponent(category)}` : '';
-  const res = await request<{ success: boolean; data: any[] }>(`/competitions${params}`);
-  return res.data.map(mapCompetition);
+  let query = supabase.from('competitions').select('*');
+  if (category && category !== 'all') {
+    query = query.eq('category', category);
+  }
+  const { data, error } = await query.order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapCompetition);
 }
 
 export async function fetchDeadlineCompetitions(days = 7): Promise<Competition[]> {
-  const res = await request<{ success: boolean; data: any[] }>(`/competitions/deadline?days=${days}`);
-  return res.data.map(mapCompetition);
+  const { data, error } = await supabase
+    .from('competitions')
+    .select('*')
+    .not('deadline', 'eq', '不限时间')
+    .not('deadline', 'eq', '已结束')
+    .order('days_remaining', { ascending: true })
+    .limit(10);
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapCompetition);
 }
 
 export async function fetchCompetitionById(id: string): Promise<Competition | null> {
-  const res = await request<{ success: boolean; data: any }>(`/competitions/${id}`);
-  return res.data ? mapCompetition(res.data) : null;
+  const { data, error } = await supabase
+    .from('competitions')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw new Error(error.message);
+  return data ? mapCompetition(data) : null;
 }
 
 export async function searchCompetitions(keyword: string): Promise<Competition[]> {
-  const res = await request<{ success: boolean; data: any[] }>(`/competitions/search?q=${encodeURIComponent(keyword)}`);
-  return res.data.map(mapCompetition);
+  const { data, error } = await supabase
+    .from('competitions')
+    .select('*')
+    .or(`title.ilike.%${keyword}%,category.ilike.%${keyword}%`);
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapCompetition);
 }
 
 export async function createCompetition(params: {
@@ -57,29 +61,51 @@ export async function createCompetition(params: {
   degree?: string;
   deadline?: string;
 }): Promise<Competition> {
-  const res = await request<{ success: boolean; data: any }>('/competitions', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
-  return mapCompetition(res.data);
+  const { data, error } = await supabase
+    .from('competitions')
+    .insert([{
+      title: params.title,
+      level: params.level || '',
+      category: params.category || '',
+      degree: params.degree || '',
+      deadline: params.deadline || '',
+      registration_status: 'upcoming',
+    }])
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return mapCompetition(data);
 }
 
 // ==================== 考试 API ====================
 
 export async function fetchExams(category?: string): Promise<Exam[]> {
-  const params = category ? `?category=${encodeURIComponent(category)}` : '';
-  const res = await request<{ success: boolean; data: any[] }>(`/exams${params}`);
-  return res.data.map(mapExam);
+  let query = supabase.from('exams').select('*');
+  if (category && category !== 'all') {
+    query = query.eq('category', category);
+  }
+  const { data, error } = await query.order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapExam);
 }
 
 export async function fetchExamById(id: string): Promise<Exam | null> {
-  const res = await request<{ success: boolean; data: any }>(`/exams/${id}`);
-  return res.data ? mapExam(res.data) : null;
+  const { data, error } = await supabase
+    .from('exams')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw new Error(error.message);
+  return data ? mapExam(data) : null;
 }
 
 export async function searchExams(keyword: string): Promise<Exam[]> {
-  const res = await request<{ success: boolean; data: any[] }>(`/exams/search?q=${encodeURIComponent(keyword)}`);
-  return res.data.map(mapExam);
+  const { data, error } = await supabase
+    .from('exams')
+    .select('*')
+    .or(`title.ilike.%${keyword}%,category.ilike.%${keyword}%`);
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapExam);
 }
 
 export async function createExam(params: {
@@ -89,119 +115,161 @@ export async function createExam(params: {
   date?: string;
   requirement?: string;
 }): Promise<Exam> {
-  const res = await request<{ success: boolean; data: any }>('/exams', {
-    method: 'POST',
-    body: JSON.stringify(params),
-  });
-  return mapExam(res.data);
+  const { data, error } = await supabase
+    .from('exams')
+    .insert([{
+      title: params.title,
+      level: params.level || '',
+      category: params.category || '',
+      date: params.date || '',
+      requirement: params.requirement || '',
+      window_status: 'normal',
+    }])
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return mapExam(data);
 }
 
 // ==================== 通知 API ====================
 
 export async function fetchNotifications(): Promise<{ notifications: Notification[]; unreadCount: number }> {
-  const res = await request<{ success: boolean; data: any[]; unreadCount: number }>('/notifications');
-  return {
-    notifications: res.data.map(mapNotification),
-    unreadCount: res.unreadCount,
-  };
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(error.message);
+  const items = (data || []).map(mapNotification);
+  const unreadCount = items.filter(n => !n.isRead).length;
+  return { notifications: items, unreadCount };
 }
 
 export async function fetchUnreadCount(): Promise<number> {
-  const res = await request<{ success: boolean; unreadCount: number }>('/notifications/unread-count');
-  return res.unreadCount;
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_read', false);
+  if (error) throw new Error(error.message);
+  return count || 0;
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  await request(`/notifications/${id}/read`, { method: 'PATCH' });
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  await request('/notifications/read-all', { method: 'PATCH' });
+  const { error } = await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('is_read', false);
+  if (error) throw new Error(error.message);
 }
 
 // ==================== 用户收藏 API ====================
 
 export async function fetchFavorites(): Promise<any[]> {
-  const res = await request<{ success: boolean; data: any[] }>('/user/favorites');
-  return res.data;
+  const { data, error } = await supabase
+    .from('favorites')
+    .select('*');
+  if (error) throw new Error(error.message);
+  return data || [];
 }
 
 export async function fetchFavoriteCount(): Promise<number> {
-  const res = await request<{ success: boolean; count: number }>('/user/favorites/count');
-  return res.count;
+  const { count, error } = await supabase
+    .from('favorites')
+    .select('*', { count: 'exact', head: true });
+  if (error) throw new Error(error.message);
+  return count || 0;
 }
 
 export async function addFavorite(competitionId?: string, examId?: string): Promise<void> {
-  await request('/user/favorites', {
-    method: 'POST',
-    body: JSON.stringify({ competitionId, examId }),
-  });
+  const { error } = await supabase
+    .from('favorites')
+    .insert([{ competition_id: competitionId, exam_id: examId }]);
+  if (error) throw new Error(error.message);
 }
 
 export async function removeFavorite(competitionId?: string, examId?: string): Promise<void> {
-  await request('/user/favorites', {
-    method: 'DELETE',
-    body: JSON.stringify({ competitionId, examId }),
-  });
+  let query = supabase.from('favorites').delete();
+  if (competitionId) query = query.eq('competition_id', competitionId);
+  if (examId) query = query.eq('exam_id', examId);
+  const { error } = await query;
+  if (error) throw new Error(error.message);
 }
 
 export async function checkFavorited(competitionId?: string, examId?: string): Promise<boolean> {
-  const params = new URLSearchParams();
-  if (competitionId) params.set('competitionId', competitionId);
-  if (examId) params.set('examId', examId);
-  const res = await request<{ success: boolean; isFavorited: boolean }>(`/user/favorites/check?${params}`);
-  return res.isFavorited;
+  let query = supabase.from('favorites').select('*', { count: 'exact', head: true });
+  if (competitionId) query = query.eq('competition_id', competitionId);
+  if (examId) query = query.eq('exam_id', examId);
+  const { count, error } = await query;
+  if (error) throw new Error(error.message);
+  return (count || 0) > 0;
 }
 
 // ==================== 用户提醒 API ====================
 
 export async function fetchReminders(): Promise<any[]> {
-  const res = await request<{ success: boolean; data: any[] }>('/user/reminders');
-  return res.data;
+  const { data, error } = await supabase
+    .from('reminders')
+    .select('*');
+  if (error) throw new Error(error.message);
+  return data || [];
 }
 
 export async function fetchReminderCount(): Promise<number> {
-  const res = await request<{ success: boolean; count: number }>('/user/reminders/count');
-  return res.count;
+  const { count, error } = await supabase
+    .from('reminders')
+    .select('*', { count: 'exact', head: true });
+  if (error) throw new Error(error.message);
+  return count || 0;
 }
 
 export async function addReminder(competitionId?: string, examId?: string): Promise<void> {
-  await request('/user/reminders', {
-    method: 'POST',
-    body: JSON.stringify({ competitionId, examId }),
-  });
+  const { error } = await supabase
+    .from('reminders')
+    .insert([{ competition_id: competitionId, exam_id: examId }]);
+  if (error) throw new Error(error.message);
 }
 
 export async function removeReminder(competitionId?: string, examId?: string): Promise<void> {
-  await request('/user/reminders', {
-    method: 'DELETE',
-    body: JSON.stringify({ competitionId, examId }),
-  });
+  let query = supabase.from('reminders').delete();
+  if (competitionId) query = query.eq('competition_id', competitionId);
+  if (examId) query = query.eq('exam_id', examId);
+  const { error } = await query;
+  if (error) throw new Error(error.message);
 }
 
 // ==================== 用户设置 API ====================
 
 export async function fetchUserSettings(): Promise<{ degree: string; push_enabled: boolean }> {
-  const res = await request<{ success: boolean; data: any }>('/user/settings');
-  return res.data;
+  const { data, error } = await supabase
+    .from('user_settings')
+    .select('*')
+    .single();
+  if (error && error.code !== 'PGRST116') throw new Error(error.message);
+  return data || { degree: 'undergrad', push_enabled: true };
 }
 
 export async function updateDegree(degree: 'undergrad' | 'junior'): Promise<void> {
-  await request('/user/settings/degree', {
-    method: 'PATCH',
-    body: JSON.stringify({ degree }),
-  });
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert([{ degree, updated_at: new Date().toISOString() }]);
+  if (error) throw new Error(error.message);
 }
 
 export async function togglePush(pushEnabled: boolean): Promise<void> {
-  await request('/user/settings/push', {
-    method: 'PATCH',
-    body: JSON.stringify({ pushEnabled }),
-  });
+  const { error } = await supabase
+    .from('user_settings')
+    .upsert([{ push_enabled: pushEnabled, updated_at: new Date().toISOString() }]);
+  if (error) throw new Error(error.message);
 }
 
 // ==================== 数据映射函数 ====================
-// 将数据库字段（snake_case）转为前端字段（camelCase）
 
 function mapCompetition(item: any): Competition {
   return {
