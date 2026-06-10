@@ -2,7 +2,7 @@
  * /api/health 健康检查
  */
 
-import { jsonResponse, handleOptions } from './_utils.ts';
+import { jsonResponse, handleOptions } from './_utils';
 
 export default async function handler(req: any) {
   if (req.method === 'OPTIONS') return handleOptions();

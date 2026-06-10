@@ -2,7 +2,7 @@
  * /api/user/* 路由
  */
 
-import { supabase, jsonResponse, handleOptions, getUserId } from './_utils.ts';
+import { supabase, jsonResponse, handleOptions, getUserId } from './_utils';
 
 export default async function handler(req: any) {
   if (req.method === 'OPTIONS') return handleOptions();
