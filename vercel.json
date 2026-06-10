@@ -1,11 +1,10 @@
 {
-  "version": 2,
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/health.ts" },
-    { "source": "/api/competitions/:path*", "destination": "/api/competitions.ts" },
-    { "source": "/api/exams/:path*", "destination": "/api/exams.ts" },
-    { "source": "/api/notifications/:path*", "destination": "/api/notifications.ts" },
-    { "source": "/api/user/:path*", "destination": "/api/user.ts" },
+    { "source": "/api/health", "destination": "/api/health.js" },
+    { "source": "/api/competitions/:path*", "destination": "/api/competitions.js" },
+    { "source": "/api/exams/:path*", "destination": "/api/exams.js" },
+    { "source": "/api/notifications/:path*", "destination": "/api/notifications.js" },
+    { "source": "/api/user/:path*", "destination": "/api/user.js" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
