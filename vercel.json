@@ -1,57 +1,20 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "functions": {
+    "api/*.ts": {
+      "runtime": "@vercel/node@3"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/health",
-      "dest": "/api/health.ts"
-    },
-    {
-      "src": "/api/competitions/(.*)",
-      "dest": "/api/competitions.ts"
-    },
-    {
-      "src": "/api/competitions",
-      "dest": "/api/competitions.ts"
-    },
-    {
-      "src": "/api/exams/(.*)",
-      "dest": "/api/exams.ts"
-    },
-    {
-      "src": "/api/exams",
-      "dest": "/api/exams.ts"
-    },
-    {
-      "src": "/api/notifications/(.*)",
-      "dest": "/api/notifications.ts"
-    },
-    {
-      "src": "/api/notifications",
-      "dest": "/api/notifications.ts"
-    },
-    {
-      "src": "/api/user/(.*)",
-      "dest": "/api/user.ts"
-    },
-    {
-      "src": "/api/user",
-      "dest": "/api/user.ts"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+  },
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/competitions/(.*)", "destination": "/api/competitions" },
+    { "source": "/api/competitions", "destination": "/api/competitions" },
+    { "source": "/api/exams/(.*)", "destination": "/api/exams" },
+    { "source": "/api/exams", "destination": "/api/exams" },
+    { "source": "/api/notifications/(.*)", "destination": "/api/notifications" },
+    { "source": "/api/notifications", "destination": "/api/notifications" },
+    { "source": "/api/user/(.*)", "destination": "/api/user" },
+    { "source": "/api/user", "destination": "/api/user" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
