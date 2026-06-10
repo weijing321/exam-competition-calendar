@@ -107,11 +107,11 @@ export default function LibraryTab({
     }
   };
 
-  // 按级别分组：A级、B级、C级(公众号)
+  // 按级别分组：A级、B级、其他
   const levelGroups = [
-    { id: 'A', label: 'A级', match: (l: string) => l.includes('A级') },
-    { id: 'B', label: 'B级', match: (l: string) => l.includes('B级') },
-    { id: 'C', label: '公众号', match: (l: string) => l.includes('C级') || l.includes('公众号') },
+    { id: 'A', label: 'A级', match: (l: string) => l.includes('A') },
+    { id: 'B', label: 'B级', match: (l: string) => l.includes('B') },
+    { id: 'C', label: '其他', match: (l: string) => !l.includes('A') && !l.includes('B') },
   ];
 
   const categories = ['职业技能', '计算机', '外贸', '创新创业', '语言', '其他'];
