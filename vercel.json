@@ -1,20 +1,11 @@
 {
   "version": 2,
-  "functions": {
-    "api/*.ts": {
-      "runtime": "@vercel/node@3"
-    }
-  },
   "rewrites": [
-    { "source": "/api/health", "destination": "/api/health" },
-    { "source": "/api/competitions/(.*)", "destination": "/api/competitions" },
-    { "source": "/api/competitions", "destination": "/api/competitions" },
-    { "source": "/api/exams/(.*)", "destination": "/api/exams" },
-    { "source": "/api/exams", "destination": "/api/exams" },
-    { "source": "/api/notifications/(.*)", "destination": "/api/notifications" },
-    { "source": "/api/notifications", "destination": "/api/notifications" },
-    { "source": "/api/user/(.*)", "destination": "/api/user" },
-    { "source": "/api/user", "destination": "/api/user" },
+    { "source": "/api/health", "destination": "/api/health.ts" },
+    { "source": "/api/competitions/:path*", "destination": "/api/competitions.ts" },
+    { "source": "/api/exams/:path*", "destination": "/api/exams.ts" },
+    { "source": "/api/notifications/:path*", "destination": "/api/notifications.ts" },
+    { "source": "/api/user/:path*", "destination": "/api/user.ts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
