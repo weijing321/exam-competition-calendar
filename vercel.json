@@ -1,0 +1,57 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/health",
+      "dest": "/api/health.ts"
+    },
+    {
+      "src": "/api/competitions/(.*)",
+      "dest": "/api/competitions.ts"
+    },
+    {
+      "src": "/api/competitions",
+      "dest": "/api/competitions.ts"
+    },
+    {
+      "src": "/api/exams/(.*)",
+      "dest": "/api/exams.ts"
+    },
+    {
+      "src": "/api/exams",
+      "dest": "/api/exams.ts"
+    },
+    {
+      "src": "/api/notifications/(.*)",
+      "dest": "/api/notifications.ts"
+    },
+    {
+      "src": "/api/notifications",
+      "dest": "/api/notifications.ts"
+    },
+    {
+      "src": "/api/user/(.*)",
+      "dest": "/api/user.ts"
+    },
+    {
+      "src": "/api/user",
+      "dest": "/api/user.ts"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}
