@@ -14,11 +14,13 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // ==================== 竞赛 API ====================
 
 export async function fetchCompetitions(category?: string): Promise<Competition[]> {
+  console.log('[api] fetchCompetitions called, category:', category);
   let query = supabase.from('competitions').select('*');
-  if (category && category !== 'all') {
+  if (category && category !== '全部') {
     query = query.eq('category', category);
   }
   const { data, error } = await query.order('created_at', { ascending: false });
+  console.log('[api] fetchCompetitions result:', { data, error });
   if (error) throw new Error(error.message);
   return (data || []).map(mapCompetition);
 }
