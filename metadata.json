@@ -1,0 +1,8 @@
+{
+  "name": "Exam & Competition Calendar",
+  "description": "A comprehensive platform for tracking academic competitions and certificate examinations with deadline reminders and personalized settings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
